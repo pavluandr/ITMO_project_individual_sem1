@@ -4,19 +4,19 @@ import seaborn as sns
 from process import load_sales_data, preprocess_data, calculate_profit_by_period, aggregate_sales_by_category, get_top_n_products, calculate_revenue_by_period, get_inventory_insights, analyze_inventory_turnover
 
 def present_revenue_by_period(data, period='D'):
-    revenue_data = calculate_revenue_by_period(data, period)# Получаем данные из функции calculate_revenue_by_period
+    revenue_data = calculate_revenue_by_period(data, period)
     
     if period == 'D':
-        labels = revenue_data['Дата'].dt.strftime('%Y-%m-%d')# Получаем названия периодов
+        labels = revenue_data['Дата'].dt.strftime('%Y-%m-%d')
         title_period = "дням"
     elif period == 'W':
-        labels = ["Неделя " + str(i+1) for i in range(len(revenue_data))]# Формируем всё по дням, неделям, месяцам
+        labels = ["Неделя " + str(i+1) for i in range(len(revenue_data))]
         title_period = "неделям"
     else:
         labels = revenue_data['Дата'].dt.strftime('%Y-%m')
         title_period = "месяцам"
     
-    values = revenue_data['Выручка по периоду']  # Данные для диаграммы
+    values = revenue_data['Выручка по периоду']
     
     plt.figure(figsize=(10, 8))
     
@@ -25,22 +25,19 @@ def present_revenue_by_period(data, period='D'):
     
     plt.title(f'Распределение выручки по {title_period}', fontsize=16, fontweight='bold')
     plt.axis('equal')
-    plt.tight_layout() # Делаем диаграмму круглой и оторбажаем
+    plt.tight_layout()
     plt.show()
 
 
 
 def visualize_category_analysis(data_clean):
-    # Настройка стиля графиков
     plt.style.use('seaborn-v0_8')
     sns.set_palette("husl")
     category_stats = aggregate_sales_by_category(data_clean)
-    # Визуализирует анализ по категориям
     if category_stats is None or len(category_stats) == 0:
         print("Нет данных для визуализации")
         return None
     
-    # Определяем сколько графиков нужно
     num_metrics = len(category_stats.columns)
     if num_metrics == 0:
         return None
@@ -63,12 +60,10 @@ def visualize_category_analysis(data_clean):
 
 
 def analyze_real_data(cleaned_data, period):
-    # Настройка стиля графиков
     plt.style.use('seaborn-v0_8')
     sns.set_palette("husl")
     print("="*40)
     
-    # Анализ 1: Прибыль по периодам
     print("\n" + "="*40)
     print("АНАЛИЗ 1: ПРИБЫЛЬ ПО ПЕРИОДАМ")
     print("="*40)
@@ -78,7 +73,6 @@ def analyze_real_data(cleaned_data, period):
         print("Прибыль по дням (первые 10 строк):")
         print(profit_daily.head(10))
         
-        # Визуализация прибыли
         plt.figure(figsize=(12, 6))
         plt.plot(profit_daily['Дата'], profit_daily['Прибыль по периоду'], marker='o', linewidth=2)
         plt.title('Динамика прибыли по дням', fontweight='bold')
@@ -89,7 +83,6 @@ def analyze_real_data(cleaned_data, period):
         plt.tight_layout()
         plt.show()
         
-        # Статистика по прибыли
         print(f"\nСтатистика прибыли:")
         print(f"Максимальная прибыль: {profit_daily['Прибыль по периоду'].max():.2f} руб.")
         print(f"Минимальная прибыль: {profit_daily['Прибыль по периоду'].min():.2f} руб.")
@@ -98,7 +91,6 @@ def analyze_real_data(cleaned_data, period):
     else:
         print("Не удалось рассчитать прибыль")
     
-    # Анализ 2: Анализ по категориям
     print("\n" + "="*50)
     print("АНАЛИЗ 2: СТАТИСТИКА ПО КАТЕГОРИЯМ")
     print("="*50)
@@ -108,7 +100,6 @@ def analyze_real_data(cleaned_data, period):
         print("Статистика по категориям:")
         print(category_stats)
         
-        # Дополнительная статистика
         if 'выручка' in category_stats.columns:
             print(f"\nОбщая выручка: {category_stats['выручка'].sum():.2f} руб.")
         if 'проданных единиц' in category_stats.columns:
@@ -116,7 +107,6 @@ def analyze_real_data(cleaned_data, period):
         if 'уникальных товаров' in category_stats.columns:
             print(f"Всего уникальных товаров: {category_stats['уникальных товаров'].sum():.0f} шт.")
         
-        # Топ-3 категории по выручке (если есть выручка)
         if 'выручка' in category_stats.columns:
             top_categories = category_stats.nlargest(3, 'выручка')
             print(f"\nТоп-3 категории по выручке:")
@@ -127,14 +117,10 @@ def analyze_real_data(cleaned_data, period):
 
 
 
-# Вывести топ продуктов
 def present_top_n_products(data, n, metric, date):
-    # Создание датафрейма из функции в другом модуле
     df = get_top_n_products(data, n, metric, date)
 
-    # Палитра цветов из сиборна
     colors = sns.color_palette("husl", n)
-    # Для каждой метрики строим горизонтальный барчарт
     if metric == 'revenue':
         plt.barh(df["Название товара"], df["Сумма_Сумма операции"], edgecolor='black', color=colors)
         plt.title("Топ самых продаваемых товаров по выручке")
@@ -146,7 +132,7 @@ def present_top_n_products(data, n, metric, date):
     plt.show()
 
 
-# Выводит отчет по движению товаров
+
 def print_inventory_report(data, top_n):
     inventory_analysis = analyze_inventory_turnover(data, top_n)
     insights = get_inventory_insights(inventory_analysis)
@@ -169,7 +155,7 @@ def print_inventory_report(data, top_n):
     print("\n ТОВАРЫ С ВОЗМОЖНЫМ ДЕФИЦИТОМ (продажи > поступления):")
     print("-" * 40)
     if insights['overstock_candidates']:
-        for item in insights['overstock_candidates'][:5]:  # Показываем первые 5
+        for item in insights['overstock_candidates'][:5]:
             print(f"• {item['Название товара']} ({item['Артикул']})")
             print(f"  Продано: {item['Продано_упаковок']} уп., Поступило: {item['Поступлено_упаковок']} уп.")
             print(f"  Разница: +{item['Разница_упаковок']} уп. (дефицит)")
@@ -179,7 +165,7 @@ def print_inventory_report(data, top_n):
     print("\n ТОВАРЫ С ВОЗМОЖНЫМ ИЗЛИШКОМ (поступления > продаж):")
     print("-" * 40)
     if insights['understock_candidates']:
-        for item in insights['understock_candidates'][:5]:  # Показываем первые 5
+        for item in insights['understock_candidates'][:5]:
             print(f"• {item['Название товара']} ({item['Артикул']})")
             print(f"  Продано: {item['Продано_упаковок']} уп., Поступило: {item['Поступлено_упаковок']} уп.")
             print(f"  Разница: {item['Разница_упаковок']} уп. (излишек)")
@@ -212,14 +198,11 @@ def get_user_request():
     print('=' * 40)
     print()
 
-    # спрашиваем путь к файлу
     file_path = input("Введите путь к файлу CSV (например: Данные 1.csv): ").strip()
 
-    # пробуем загрузить и подготовить данные
     data = load_sales_data(file_path)
     data_clean = preprocess_data(data)
 
-    # если что-то пошло не так — завершаем
     if data_clean is None:
         print("Не получилось загрузить данные. Завершаю программу.")
         return
@@ -345,7 +328,6 @@ def get_user_request():
             print_inventory_report(data_clean, n)
 
 
-        # после выполнения действия спрашиваем, хочет ли пользователь продолжить работу с программой
         print()
         print('=' * 40)
         again = input("Хотите сделать что-то еще? (да/нет): ").strip().lower()
@@ -358,7 +340,6 @@ def get_user_request():
             print('=' * 40)
             break
         else:
-            # если ввёл что-то не то, то просто выходим, чтобы не зациклить
             print('=' * 40)
             print("Не понял Ваш ответ. Завершаю программу. До свидания.")
             print('=' * 40)
