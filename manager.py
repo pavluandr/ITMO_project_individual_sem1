@@ -1,3 +1,4 @@
+from datetime import datetime # Импортируем datetime для записи файла
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -120,15 +121,23 @@ def analyze_real_data(cleaned_data, period):
 def present_top_n_products(data, n, metric, date):
     df = get_top_n_products(data, n, metric, date)
 
+    # Используем вертикальные столбцы вместо горизонтальных
+    fig, ax = plt.subplots(figsize=(12, 6))
+    
     colors = sns.color_palette("husl", n)
+    
     if metric == 'revenue':
-        plt.barh(df["Название товара"], df["Сумма_Сумма операции"], edgecolor='black', color=colors)
-        plt.title("Топ самых продаваемых товаров по выручке")
-        plt.ylabel("Рублей")
+        bars = ax.bar(df["Название товара"], df["Сумма_Сумма операции"], edgecolor='black', color=colors)
+        ax.set_title("Топ самых продаваемых товаров по выручке")
+        ax.set_ylabel("Рублей")
     else:
-        plt.barh(df["Название товара"], df["Сумма_Количество упаковок, шт."], edgecolor='black', color=colors)
-        plt.title("Топ самых продаваемых товаров по количеству")
-        plt.ylabel("Упаковок")
+        bars = ax.bar(df["Название товара"], df["Сумма_Количество упаковок, шт."], edgecolor='black', color=colors)
+        ax.set_title("Топ самых продаваемых товаров по количеству")
+        ax.set_ylabel("Упаковок")
+    
+    # Поворачиваем подписи по оси X на 45 градусов
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
     plt.show()
 
 
@@ -136,58 +145,67 @@ def present_top_n_products(data, n, metric, date):
 def print_inventory_report(data, top_n):
     inventory_analysis = analyze_inventory_turnover(data, top_n)
     insights = get_inventory_insights(inventory_analysis)
-
-    print("=" * 40)
-    print("АНАЛИЗ ДВИЖЕНИЯ ТОВАРОВ И ИХ РЕНТАБЕЛЬНОСТИ")
-    print("=" * 80)
     
-    print("\n СВОДНАЯ СТАТИСТИКА:")
-    print("-" * 40)
-    stats = insights['summary_stats']
-    print(f"Всего товаров в анализе: {stats['total_items']}")
-    print(f"Общая выручка: {stats['total_revenue']:,.2f} руб.")
-    print(f"Общие затраты на закупки: {stats['total_costs']:,.2f} руб.")
-    print(f"Общая прибыль: {stats['total_profit']:,.2f} руб.")
-    print(f"Средняя рентабельность: {stats['avg_profitability']:.2f}%")
-    print(f"Товаров с возможным дефицитом: {stats['items_with_deficit']}")
-    print(f"Товаров с возможным излишком: {stats['items_with_excess']}")
+    # Генерируем имя файла с текущей датой и временем
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"inventory_report_{timestamp}.txt"
     
-    print("\n ТОВАРЫ С ВОЗМОЖНЫМ ДЕФИЦИТОМ (продажи > поступления):")
-    print("-" * 40)
-    if insights['overstock_candidates']:
-        for item in insights['overstock_candidates'][:5]:
-            print(f"• {item['Название товара']} ({item['Артикул']})")
-            print(f"  Продано: {item['Продано_упаковок']} уп., Поступило: {item['Поступлено_упаковок']} уп.")
-            print(f"  Разница: +{item['Разница_упаковок']} уп. (дефицит)")
-    else:
-        print("Нет товаров с явным дефицитом")
+    # Открываем файл для записи
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write("=" * 40 + "\n")
+        f.write("АНАЛИЗ ДВИЖЕНИЯ ТОВАРОВ И ИХ РЕНТАБЕЛЬНОСТИ\n")
+        f.write("=" * 40 + "\n")
+        
+        f.write("\n СВОДНАЯ СТАТИСТИКА:\n")
+        f.write("-" * 40 + "\n")
+        stats = insights['summary_stats']
+        f.write(f"Всего товаров в анализе: {stats['total_items']}\n")
+        f.write(f"Общая выручка: {stats['total_revenue']:,.2f} руб.\n")
+        f.write(f"Общие затраты на закупки: {stats['total_costs']:,.2f} руб.\n")
+        f.write(f"Общая прибыль: {stats['total_profit']:,.2f} руб.\n")
+        f.write(f"Средняя рентабельность: {stats['avg_profitability']:.2f}%\n")
+        f.write(f"Товаров с возможным дефицитом: {stats['items_with_deficit']}\n")
+        f.write(f"Товаров с возможным излишком: {stats['items_with_excess']}\n")
+        
+        f.write("\n ТОВАРЫ С ВОЗМОЖНЫМ ДЕФИЦИТОМ (продажи > поступления):\n")
+        f.write("-" * 40 + "\n")
+        if insights['overstock_candidates']:
+            for item in insights['overstock_candidates'][:5]:
+                f.write(f"• {item['Название товара']} ({item['Артикул']})\n")
+                f.write(f"  Продано: {item['Продано_упаковок']} уп., Поступило: {item['Поступлено_упаковок']} уп.\n")
+                f.write(f"  Разница: +{item['Разница_упаковок']} уп. (дефицит)\n")
+        else:
+            f.write("Нет товаров с явным дефицитом\n")
+        
+        f.write("\n ТОВАРЫ С ВОЗМОЖНЫМ ИЗЛИШКОМ (поступления > продаж):\n")
+        f.write("-" * 40 + "\n")
+        if insights['understock_candidates']:
+            for item in insights['understock_candidates'][:5]:
+                f.write(f"• {item['Название товара']} ({item['Артикул']})\n")
+                f.write(f"  Продано: {item['Продано_упаковок']} уп., Поступило: {item['Поступлено_упаковок']} уп.\n")
+                f.write(f"  Разница: {item['Разница_упаковок']} уп. (излишек)\n")
+        else:
+            f.write("Нет товаров с явным излишком\n")
+        
+        f.write("\n САМЫЕ ПРИБЫЛЬНЫЕ ТОВАРЫ:\n")
+        f.write("-" * 40 + "\n")
+        for item in insights['most_profitable']:
+            f.write(f"• {item['Название товара']} ({item['Артикул']})\n")
+            f.write(f"  Прибыль: {item['Прибыль']:,.2f} руб. | "
+                   f"Рентабельность: {item['Рентабельность_%']}%\n")
+        
+        f.write("\n НАИМЕНЕЕ ПРИБЫЛЬНЫЕ ТОВАРЫ:\n")
+        f.write("-" * 40 + "\n")
+        for item in insights['least_profitable']:
+            profitability = item['Рентабельность_%']
+            profit_status = f"Прибыль: {item['Прибыль']:,.2f} руб." if item['Прибыль'] >= 0 else f"Убыток: {item['Прибыль']:,.2f} руб."
+            f.write(f"• {item['Название товара']} ({item['Артикул']})\n")
+            f.write(f"  {profit_status} | Рентабельность: {profitability}%\n")
+        
+        f.write("\n" + "=" * 40 + "\n")
     
-    print("\n ТОВАРЫ С ВОЗМОЖНЫМ ИЗЛИШКОМ (поступления > продаж):")
-    print("-" * 40)
-    if insights['understock_candidates']:
-        for item in insights['understock_candidates'][:5]:
-            print(f"• {item['Название товара']} ({item['Артикул']})")
-            print(f"  Продано: {item['Продано_упаковок']} уп., Поступило: {item['Поступлено_упаковок']} уп.")
-            print(f"  Разница: {item['Разница_упаковок']} уп. (излишек)")
-    else:
-        print("Нет товаров с явным излишком")
-    
-    print("\n САМЫЕ ПРИБЫЛЬНЫЕ ТОВАРЫ:")
-    print("-" * 40)
-    for item in insights['most_profitable']:
-        print(f"• {item['Название товара']} ({item['Артикул']})")
-        print(f"  Прибыль: {item['Прибыль']:,.2f} руб. | "
-              f"Рентабельность: {item['Рентабельность_%']}%")
-    
-    print("\n НАИМЕНЕЕ ПРИБЫЛЬНЫЕ ТОВАРЫ:")
-    print("-" * 40)
-    for item in insights['least_profitable']:
-        profitability = item['Рентабельность_%']
-        profit_status = f"Прибыль: {item['Прибыль']:,.2f} руб." if item['Прибыль'] >= 0 else f"Убыток: {item['Прибыль']:,.2f} руб."
-        print(f"• {item['Название товара']} ({item['Артикул']})")
-        print(f"  {profit_status} | Рентабельность: {profitability}%")
-    
-    print("\n" + "=" * 80)
+    # Выводим сообщение в консоль
+    print(f"Анализ товаров произведен успешно. Результаты записаны в файл: {filename}")
 
 
 
