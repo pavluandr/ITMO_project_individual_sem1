@@ -137,7 +137,7 @@ def present_top_n_products(data, n, metric, date):
     
     # Поворачиваем подписи по оси X на 45 градусов
     plt.xticks(rotation=45, ha='right')
-    plt.tight_layout()
+    plt.tight_layout() # Чтобы матплотлиб автоматически настроил текст так, чтобы он не налезал друг на друга и не выходил за область отображения
     plt.show()
 
 
