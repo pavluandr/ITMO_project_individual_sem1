@@ -217,7 +217,7 @@ def analyze_inventory_turnover(data_clean, top_n=10):
         inventory_analysis['Выручка_от_продаж'] - inventory_analysis['Затраты_на_закупки'])
 
     mask = inventory_analysis['Затраты_на_закупки'] > 0
-    inventory_analysis['Рентабельность_%'] = 0
+    inventory_analysis['Рентабельность_%'] = 0.0 # Создание столбца в формате float64, а не int64
     inventory_analysis.loc[mask, 'Рентабельность_%'] = ((inventory_analysis.loc[mask, 'Прибыль'] / inventory_analysis.loc[mask, 'Затраты_на_закупки']) * 100)
     only_sales_mask = (inventory_analysis['Продано_упаковок'] > 0) & (inventory_analysis['Затраты_на_закупки'] == 0)
     inventory_analysis.loc[only_sales_mask, 'Рентабельность_%'] = None
